@@ -2,6 +2,27 @@ document$.subscribe(() => {
   const article = document.querySelector(".md-content__inner");
   if (!article) return;
 
+  function triggerCleanPdfPrint(includeCards = true) {
+    const body = document.body;
+    const prevScheme = body.getAttribute("data-md-color-scheme");
+    body.setAttribute("data-md-color-scheme", "default");
+
+    const questionBoxes = document.querySelectorAll("details.question, details.tip");
+    questionBoxes.forEach(d => {
+      if (includeCards) {
+        d.style.display = "";
+        d.setAttribute("open", "");
+      } else {
+        d.style.display = "none";
+      }
+    });
+
+    setTimeout(() => {
+      window.print();
+      if (prevScheme) body.setAttribute("data-md-color-scheme", prevScheme);
+      questionBoxes.forEach(d => { d.style.display = ""; });
+    }, 150);
+  }
 
   if (window.location.pathname.includes("print_page")) {
     if (!document.getElementById("pdf-export-bar")) {
@@ -10,34 +31,22 @@ document$.subscribe(() => {
       pdfBar.className = "srs-dashboard";
       pdfBar.innerHTML = `
         <div>
-          <div style="font-size: 1.1rem; font-weight: 750;">📄 Gesamtskript & PDF-Export</div>
-          <div style="font-size: 0.88rem; opacity: 0.8; margin-top: 4px;">
-            Alle Kapitel auf einer Seite. Klicke rechts auf den Button und wähle im Druckfenster <b>„Als PDF speichern“</b>.
+          <div style="font-size: 1rem; font-weight: 700;">Gesamtskript (PDF-Export)</div>
+          <div style="font-size: 0.82rem; opacity: 0.8; margin-top: 2px;">
+            Wähle, ob du das Skript <b>mit</b> oder <b>ohne</b> Lernkarten als kompaktes A4-PDF speichern möchtest.
           </div>
         </div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button id="btn-toggle-details" class="md-button">Alle Karten auf-/zuklappen</button>
-          <button id="btn-save-pdf" class="md-button md-button--primary">📥 Als PDF speichern</button>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button id="btn-pdf-no-cards" class="md-button">PDF (Nur Zusammenfassung)</button>
+          <button id="btn-pdf-with-cards" class="md-button md-button--primary">PDF (Inkl. Lernkarten)</button>
         </div>
       `;
       article.insertBefore(pdfBar, article.firstChild);
 
-      let allOpen = true;
       document.querySelectorAll("details").forEach(d => d.setAttribute("open", ""));
 
-      pdfBar.querySelector("#btn-toggle-details").onclick = () => {
-        allOpen = !allOpen;
-        document.querySelectorAll("details").forEach(d => {
-          if (allOpen) d.setAttribute("open", "");
-          else d.removeAttribute("open");
-        });
-      };
-
-      pdfBar.querySelector("#btn-save-pdf").onclick = () => {
-        // Vor dem PDF-Druck alle Antworten sichtbar machen
-        document.querySelectorAll("details").forEach(d => d.setAttribute("open", ""));
-        window.print();
-      };
+      pdfBar.querySelector("#btn-pdf-no-cards").onclick = () => triggerCleanPdfPrint(false);
+      pdfBar.querySelector("#btn-pdf-with-cards").onclick = () => triggerCleanPdfPrint(true);
     }
     return;
   }
@@ -76,26 +85,26 @@ document$.subscribe(() => {
     const learnedCount = getLearnedCount();
     launcher.innerHTML = `
       <div>
-        <div style="font-size: 1.05rem; font-weight: 750; display:flex; align-items:center; gap:8px;">
-          <span>Anki Web-Trainer (Spaced Repetition)</span>
+        <div style="font-size: 0.95rem; font-weight: 700;">
+          🧠 Karteikarten-Trainer (Spaced Repetition)
         </div>
         <div class="srs-badge-row">
-          <span class="srs-badge">${cards.length} Karten im Kapitel</span>
+          <span class="srs-badge">📚 ${cards.length} Karten</span>
           <span class="srs-badge ${dueCount > 0 ? 'due' : 'done'}">
-            ${dueCount > 0 ? ` ${dueCount} heute fällig` : `Alles gelernt!`}
+            ${dueCount > 0 ? `${dueCount} fällig` : `Alle aktuell gelernt`}
           </span>
-          <span class="srs-badge done">🏆 ${learnedCount} gemeistert</span>
+          <span class="srs-badge done">✓ ${learnedCount} im Langzeitgedächtnis</span>
         </div>
       </div>
-      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
         <button id="srs-start-due" class="md-button md-button--primary" style="margin:0;">
           ▶ Fällige lernen (${dueCount})
         </button>
         <button id="srs-start-all" class="md-button" style="margin:0;">
-          Alle wiederholen
+          Alle üben
         </button>
-        <button id="srs-pdf-page" class="md-button" style="margin:0;" title="Kapitel als PDF drucken">
-          PDF
+        <button id="srs-pdf-page" class="md-button" style="margin:0;" title="Dieses Kapitel als kompaktes PDF speichern">
+          📄 Kapitel-PDF
         </button>
       </div>
     `;
@@ -104,10 +113,7 @@ document$.subscribe(() => {
       startSession(due.length > 0 ? due : [...cards]);
     };
     launcher.querySelector("#srs-start-all").onclick = () => startSession([...cards]);
-    launcher.querySelector("#srs-pdf-page").onclick = () => {
-      document.querySelectorAll("details").forEach(d => d.setAttribute("open", ""));
-      window.print();
-    };
+    launcher.querySelector("#srs-pdf-page").onclick = () => triggerCleanPdfPrint(true);
   };
 
   const h1 = article.querySelector("h1");
@@ -117,6 +123,7 @@ document$.subscribe(() => {
     article.insertBefore(launcher, article.firstChild);
   }
   updateLauncher();
+
 
   function startSession(queue) {
     let currentIndex = 0;
@@ -145,8 +152,7 @@ document$.subscribe(() => {
         if (showBtn) showBtn.click();
       } else if (isAnswerShown && ["1", "2", "3", "4"].includes(e.key)) {
         e.preventDefault();
-        const q = parseInt(e.key) - 1;
-        rateCard(queue[currentIndex], q);
+        rateCard(queue[currentIndex], parseInt(e.key) - 1);
       }
     };
     window.addEventListener("keydown", handleKeys);
@@ -158,13 +164,13 @@ document$.subscribe(() => {
       if (currentIndex >= queue.length) {
         modal.innerHTML = `
           <div class="srs-progress-bar"><div class="srs-progress-fill" style="width:100%"></div></div>
-          <div style="text-align:center; padding: 20px 0;">
-            <div style="font-size: 3rem; margin-bottom: 10px;">🎉</div>
-            <h2 style="margin-top:0; border:none;">Stark! Runde abgeschlossen</h2>
-            <p style="opacity:0.8; max-width:440px; margin: 0 auto 24px auto;">
-              Alle Karten dieser Einheit sind durchgearbeitet. Dein Lernstand wurde automatisch gespeichert.
+          <div style="text-align:center; padding: 16px 0;">
+            <div style="font-size: 2.4rem; margin-bottom: 8px;">🎓</div>
+            <h3 style="margin-top:0;">Durchgang abgeschlossen!</h3>
+            <p style="opacity:0.8; font-size:0.88rem; max-width:420px; margin: 0 auto 20px auto;">
+              Alle Karten dieser Sitzung wurden wiederholt. Die nächsten Intervalle sind gespeichert.
             </p>
-            <button id="srs-close" class="md-button md-button--primary">Zurück zum Kapitel (Esc)</button>
+            <button id="srs-close" class="md-button md-button--primary">Schließen (Esc)</button>
           </div>
         `;
         modal.querySelector("#srs-close").onclick = closeSession;
@@ -172,42 +178,42 @@ document$.subscribe(() => {
       }
 
       const card = queue[currentIndex];
-      const badgeLabel = card.isCloze ? "Lückentext-Karte" : "Frage & Antwort";
+      const badgeLabel = card.isCloze ? "Lückentext" : "Frage & Antwort";
 
       const frontContent = card.isCloze
-        ? `<div style="font-weight:700; font-size:1.1rem; margin-bottom:14px; color:var(--theme-color);">${card.title}</div>
-           <div style="font-size:1.05rem; line-height:1.7;">
-             ${card.bodyHtml.replace(/<mark>(.*?)<\/mark>/g, "<span style='background:var(--theme-color-light); color:var(--theme-color); padding:2px 10px; border-radius:6px; font-weight:700; border:1px dashed var(--theme-color);'>[ ... ]</span>")}
+        ? `<div style="font-weight:650; font-size:0.95rem; margin-bottom:10px; color:var(--accent-main);">${card.title}</div>
+           <div style="font-size:0.95rem; line-height:1.65;">
+             ${card.bodyHtml.replace(/<mark>(.*?)<\/mark>/g, "<span style='background:var(--accent-pastel-bg); color:var(--accent-main); padding:1px 8px; border-radius:4px; font-weight:600; border:1px solid var(--accent-pastel-border);'>[ ... ]</span>")}
            </div>`
-        : `<div style="font-size:1.25rem; font-weight:700; line-height:1.5;">${card.title}</div>`;
+        : `<div style="font-size:1.1rem; font-weight:650; line-height:1.5;">${card.title}</div>`;
 
       const backContent = card.isCloze
-        ? `<div style="font-size:1.05rem; line-height:1.7;">
-             ${card.bodyHtml.replace(/<mark>(.*?)<\/mark>/g, "<span style='background:rgba(16,185,129,0.18); color:#10b981; padding:2px 8px; border-radius:6px; font-weight:700; border:1px solid #10b981;'>$1</span>")}
+        ? `<div style="font-size:0.95rem; line-height:1.65;">
+             ${card.bodyHtml.replace(/<mark>(.*?)<\/mark>/g, "<span style='background:var(--pastel-mint-bg); color:var(--pastel-mint-text); padding:1px 7px; border-radius:4px; font-weight:650; border:1px solid var(--pastel-mint-border);'>$1</span>")}
            </div>`
-        : `<div style="font-size:1.05rem; line-height:1.7;">${card.bodyHtml}</div>`;
+        : `<div style="font-size:0.95rem; line-height:1.65;">${card.bodyHtml}</div>`;
 
       modal.innerHTML = `
         <div class="srs-progress-bar">
           <div class="srs-progress-fill" style="width:${progressPct}%"></div>
         </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.82rem; opacity:0.75; margin-bottom:18px;">
-          <span class="srs-badge">${badgeLabel} • Karte ${currentIndex + 1} / ${queue.length}</span>
-          <span style="cursor:pointer; font-weight:600; padding:4px 8px;" id="srs-exit">✕ Schließen (Esc)</span>
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; margin-bottom:16px;">
+          <span class="srs-badge">${badgeLabel} • ${currentIndex + 1} / ${queue.length}</span>
+          <span style="cursor:pointer; font-weight:600; color:var(--text-secondary);" id="srs-exit">✕ Esc</span>
         </div>
 
-        <div id="srs-front" style="padding: 10px 0;">${frontContent}</div>
+        <div id="srs-front" style="padding: 6px 0;">${frontContent}</div>
 
-        <div id="srs-back" style="display:none; margin-top:22px; padding-top:22px; border-top:2px dashed rgba(148,163,184,0.25);">
-          <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.08em; color:#10b981; font-weight:700; margin-bottom:8px;">
-            Lösung / Antwort
+        <div id="srs-back" style="display:none; margin-top:18px; padding-top:18px; border-top:1px solid var(--border-hairline);">
+          <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--pastel-mint-text); font-weight:700; margin-bottom:6px;">
+            Antwort
           </div>
           ${backContent}
         </div>
 
-        <div id="srs-actions" style="margin-top:28px;">
-          <button id="srs-show" class="md-button md-button--primary" style="width:100%; padding:0.85em !important; font-size:0.95rem;">
-            👁️ Antwort aufdecken <span style="opacity:0.75; font-weight:400; margin-left:6px;">(Leertaste)</span>
+        <div id="srs-actions" style="margin-top:24px;">
+          <button id="srs-show" class="md-button md-button--primary" style="width:100%; padding:0.75em !important;">
+            Antwort anzeigen (Leertaste)
           </button>
         </div>
       `;
@@ -219,9 +225,6 @@ document$.subscribe(() => {
         isAnswerShown = true;
         modal.querySelector("#srs-back").style.display = "block";
         modal.querySelector("#srs-actions").innerHTML = `
-          <div style="text-align:center; font-size:0.78rem; opacity:0.65; margin-bottom:8px;">
-            Wie gut wusstest du die Antwort? (Tasten 1 – 4)
-          </div>
           <div class="srs-rate-grid">
             <button data-q="0" class="srs-rate-btn again">
               <span>1 • Nochmal</span>
@@ -252,7 +255,7 @@ document$.subscribe(() => {
       if (quality === 0) {
         state.reps = 0;
         state.interval = 0.007;
-        queue.push(card); 
+        queue.push(card);
       } else {
         state.reps += 1;
         if (state.reps === 1) state.interval = quality === 1 ? 1 : (quality === 2 ? 3 : 7);
