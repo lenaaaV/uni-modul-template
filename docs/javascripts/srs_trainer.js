@@ -25,6 +25,30 @@ document$.subscribe(() => {
   }
 
   if (window.location.pathname.includes("print_page")) {
+    document.querySelectorAll("a.md-button").forEach(btn => btn.remove());
+
+    const tocBox = document.getElementById("print-page-toc");
+    if (tocBox) {
+      const existingLinks = tocBox.querySelectorAll("a");
+      if (existingLinks.length === 0) {
+        const headings = Array.from(article.querySelectorAll("h1, h2")).filter(
+          h => !h.closest("#print-page-toc")
+        );
+        if (headings.length > 0) {
+          let tocHtml = `<h2 style="margin-top:0; border:none; font-size:1.1rem;">Inhaltsverzeichnis</h2><ul style="margin-bottom:0;">`;
+          headings.forEach((h, i) => {
+            if (!h.id) h.id = "sec-" + i;
+            const indent = h.tagName === "H2" ? "margin-left: 1.2rem; list-style-type: circle;" : "font-weight: 650; margin-top: 0.35rem;";
+            tocHtml += `<li style="${indent}"><a href="#${h.id}">${h.textContent.replace("¶", "").trim()}</a></li>`;
+          });
+          tocHtml += `</ul>`;
+          tocBox.innerHTML = tocHtml;
+        } else {
+          tocBox.remove();
+        }
+      }
+    }
+
     if (!document.getElementById("pdf-export-bar")) {
       const pdfBar = document.createElement("div");
       pdfBar.id = "pdf-export-bar";
@@ -33,12 +57,12 @@ document$.subscribe(() => {
         <div>
           <div style="font-size: 1rem; font-weight: 700;">Gesamtskript (PDF-Export)</div>
           <div style="font-size: 0.82rem; opacity: 0.8; margin-top: 2px;">
-            Wähle, ob du das Skript <b>mit</b> oder <b>ohne</b> Lernkarten als kompaktes A4-PDF speichern möchtest.
+            Wähle, ob du das Skript <b>mit</b> oder <b>ohne</b> Lernkarten als kompaktes PDF speichern möchtest.
           </div>
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <button id="btn-pdf-no-cards" class="md-button">PDF (Nur Zusammenfassung)</button>
-          <button id="btn-pdf-with-cards" class="md-button md-button--primary">PDF (Inkl. Lernkarten)</button>
+          <button id="btn-pdf-no-cards" class="md-button">📥 PDF (Nur Zusammenfassung)</button>
+          <button id="btn-pdf-with-cards" class="md-button md-button--primary">📥 PDF (Inkl. Lernkarten)</button>
         </div>
       `;
       article.insertBefore(pdfBar, article.firstChild);
@@ -103,7 +127,7 @@ document$.subscribe(() => {
         <button id="srs-start-all" class="md-button" style="margin:0;">
           Alle üben
         </button>
-        <button id="srs-pdf-page" class="md-button" style="margin:0;" title="Dieses Kapitel als kompaktes PDF speichern">
+        <button id="srs-pdf-page" class="md-button" style="margin:0;">
           📄 Kapitel-PDF
         </button>
       </div>
@@ -123,7 +147,6 @@ document$.subscribe(() => {
     article.insertBefore(launcher, article.firstChild);
   }
   updateLauncher();
-
 
   function startSession(queue) {
     let currentIndex = 0;

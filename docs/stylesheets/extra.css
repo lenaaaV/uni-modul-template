@@ -1,8 +1,8 @@
 :root,
 [data-md-color-scheme="default"] {
-    --accent-main: #4f46e5;             
-    --accent-pastel-bg: #eef2ff;        
-    --accent-pastel-border: #c7d2fe;   
+    --accent-main: #4f46e5;
+    --accent-pastel-bg: #eef2ff;
+    --accent-pastel-border: #c7d2fe;
 
     --pastel-mint-bg: #ecfdf5;
     --pastel-mint-border: #a7f3d0;
@@ -32,7 +32,7 @@
 }
 
 [data-md-color-scheme="slate"] {
-    --accent-main: #818cf8;             
+    --accent-main: #818cf8;
     --accent-pastel-bg: rgba(99, 102, 241, 0.14);
     --accent-pastel-border: rgba(129, 140, 248, 0.3);
 
@@ -64,7 +64,6 @@
     --md-code-bg-color: #162032;
 }
 
-
 .md-header {
     background-color: var(--surface-card) !important;
     color: var(--text-primary) !important;
@@ -83,9 +82,11 @@
     border: 1px solid var(--border-hairline);
     border-radius: 8px !important;
 }
+
 .md-search__input {
     color: var(--text-primary) !important;
 }
+
 .md-search__input::placeholder {
     color: var(--text-secondary) !important;
 }
@@ -101,7 +102,6 @@
     padding: 5px 10px !important;
     border-radius: 6px;
 }
-
 
 .md-typeset {
     font-size: 0.82rem;
@@ -149,8 +149,16 @@
     background-color: var(--accent-pastel-bg) !important;
     color: var(--text-primary) !important;
     font-weight: 600 !important;
-    padding: 0.65rem 1rem 0.65rem 2.6rem !important;
+    padding: 0.65rem 2.4rem 0.65rem 2.6rem !important;
     border-bottom: 1px solid transparent;
+    position: relative;
+}
+
+.md-typeset .admonition-title::before,
+.md-typeset details > summary::before,
+.md-typeset details > summary::after {
+    top: 50% !important;
+    transform: translateY(-50%) !important;
 }
 
 .md-typeset details[open] > summary {
@@ -161,6 +169,7 @@
 .md-typeset .admonition.tip {
     border-left-color: var(--pastel-mint-text) !important;
 }
+
 .md-typeset details.tip > summary,
 .md-typeset .admonition.tip > .admonition-title {
     background-color: var(--pastel-mint-bg) !important;
@@ -170,11 +179,11 @@
 .md-typeset details.warning {
     border-left-color: var(--pastel-amber-text) !important;
 }
+
 .md-typeset .admonition.warning > .admonition-title,
 .md-typeset details.warning > summary {
     background-color: var(--pastel-amber-bg) !important;
 }
-
 
 .md-typeset mark {
     background-color: var(--accent-pastel-bg);
@@ -196,7 +205,6 @@
     border-color: var(--pastel-mint-border);
     user-select: auto;
 }
-
 
 .md-typeset div.arithmatex {
     background-color: var(--surface-subtle);
@@ -236,7 +244,6 @@
 .md-typeset .md-button--primary:hover {
     opacity: 0.92;
 }
-
 
 .srs-dashboard {
     margin: 1rem 0 1.8rem 0;
@@ -356,6 +363,13 @@
 .srs-rate-btn.good:hover  { background-color: var(--pastel-mint-bg); border-color: var(--pastel-mint-border); color: var(--pastel-mint-text); }
 .srs-rate-btn.easy:hover  { background-color: var(--accent-pastel-bg); border-color: var(--accent-pastel-border); color: var(--accent-main); }
 
+#print-site-page #print-page-toc {
+    border: 1px solid var(--border-hairline);
+    background-color: var(--surface-subtle);
+    border-radius: 10px;
+    padding: 1rem 1.4rem;
+    margin: 1.5rem 0;
+}
 
 @media print {
     @page {
@@ -376,6 +390,7 @@
     .md-sidebar,
     .md-footer,
     .md-top,
+    .md-button,
     .headerlink,
     #pdf-export-bar {
         display: none !important;
@@ -414,16 +429,15 @@
         page-break-after: avoid;
     }
 
-    /* Boxen & Lernkarten im PDF: Heller Hintergrund + schwarze Schrift */
     .md-typeset .admonition,
     .md-typeset details {
         background-color: #ffffff !important;
         color: #111827 !important;
         border: 0.75pt solid #cbd5e1 !important;
         border-left: 3pt solid #4f46e5 !important;
-        border-radius: 5pt !important;
+        border-radius: 4pt !important;
         box-shadow: none !important;
-        margin: 6pt 0 !important;
+        margin: 7pt 0 !important;
         page-break-inside: avoid;
         break-inside: avoid;
     }
@@ -432,9 +446,20 @@
     .md-typeset details > summary {
         background-color: #f1f5f9 !important;
         color: #0f172a !important;
-        padding: 4pt 8pt 4pt 22pt !important;
+        padding: 5pt 10pt !important;
         font-size: 9.5pt !important;
+        font-weight: 700 !important;
+        line-height: 1.35 !important;
         border-bottom: 0.5pt solid #cbd5e1 !important;
+        list-style: none !important;
+    }
+
+    .md-typeset .admonition-title::before,
+    .md-typeset details > summary::before,
+    .md-typeset details > summary::after,
+    .md-typeset details > summary::-webkit-details-marker {
+        display: none !important;
+        content: none !important;
     }
 
     .md-typeset .admonition *,
@@ -465,6 +490,7 @@
         box-shadow: none !important;
         page-break-inside: avoid;
     }
+
     .md-typeset table:not([class]) th {
         background-color: #f1f5f9 !important;
         color: #0f172a !important;
